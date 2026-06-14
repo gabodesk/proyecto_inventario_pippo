@@ -37,8 +37,8 @@ def registrar_producto():
     etiqueta_mensaje.configure(text="Producto registrado correctamente")
 
     entrada_nombre.delete(0, "end")
-    entrada_categoria.delete(0, "end")
-    entrada_unidad_medida.delete(0, "end")
+    entrada_categoria.set("limpieza")
+    entrada_unidad_medida.set("unidades enteras")
     entrada_stock_actual.delete(0, "end")
     entrada_stock_minimo.delete(0, "end")
 
@@ -86,11 +86,22 @@ marco_formulario.pack(pady=10, padx=20, fill="x")
 entrada_nombre = ctk.CTkEntry(marco_formulario, placeholder_text="Nombre del producto")
 entrada_nombre.grid(row=0, column=0, padx=10, pady=10)
 
-entrada_categoria = ctk.CTkEntry(marco_formulario, placeholder_text="Categoría")
-entrada_categoria.grid(row=0, column=1, padx=10, pady=10)
+opciones_categoria = ["limpieza", "educativo", "oficina"]
+opciones_unidad = ["unidades enteras", "litros", "kilogramos", "metros"]
 
-entrada_unidad_medida = ctk.CTkEntry(marco_formulario, placeholder_text="Unidad de medida")
+entrada_categoria = ctk.CTkOptionMenu(
+    marco_formulario,
+    values=opciones_categoria
+)
+entrada_categoria.grid(row=0, column=1, padx=10, pady=10)
+entrada_categoria.set("limpieza")
+
+entrada_unidad_medida = ctk.CTkOptionMenu(
+    marco_formulario,
+    values=opciones_unidad
+)
 entrada_unidad_medida.grid(row=0, column=2, padx=10, pady=10)
+entrada_unidad_medida.set("unidades enteras")
 
 entrada_stock_actual = ctk.CTkEntry(marco_formulario, placeholder_text="Stock actual")
 entrada_stock_actual.grid(row=1, column=0, padx=10, pady=10)
