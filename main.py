@@ -46,7 +46,8 @@ def registrar_producto():
 
 
 def cargar_productos():
-    """Carga productos desde SQLite e imprímelos en pantalla"""
+    """Carga productos desde SQLite, imprime en pantalla,
+    ordena según urgencia"""
     caja_productos.delete("0.0", "end")
     
     productos = obtener_productos()
@@ -55,14 +56,32 @@ def cargar_productos():
         caja_productos.insert("end", "No hay productos registrados todavía")
         return
     
+    # Esta parte ordena:
+    urgentes = []
+    suficientes = []
+
+    # loop de carga:
     for producto in productos:
         id_producto, nombre, categoria, unidad_medida, stock_actual, stock_minimo = producto
 
         if stock_actual <= stock_minimo:
-            estado = "URGENTE COMPRAR"
+            urgentes.append(producto)
+        else:
+            suficientes.append(producto)
+
+    productos_ordenados = urgentes + suficientes
+    
+
+    for producto in productos_ordenados:
+        id_producto, nombre, categoria, unidad_medida, stock_actual, stock_minimo = producto
+
+        if stock_actual <= stock_minimo:
+            estado = "Urgente Comprar"
+            etiqueta_color = "urgente"
         else:
             estado = "Stock suficiente"
-        
+            etiqueta_color= "suficiente"
+
         texto = (
             f"ID: {id_producto} | "
             f"Producto: {nombre} | "
@@ -73,7 +92,13 @@ def cargar_productos():
             f"Estado: {estado}\n"
         )
 
+        posicion_inicio = caja_productos._textbox.index("end-1c")
         caja_productos.insert("end", texto)
+        posicion_final = caja_productos._textbox.index("end-1c")
+
+        caja_productos._textbox.tag_add(etiqueta_color, posicion_inicio, posicion_final)
+
+
 
 # Título
 titulo = ctk.CTkLabel(app, text="Sistema de Inventario")
@@ -125,6 +150,24 @@ etiqueta_mensaje.pack(pady=5)
 caja_productos = ctk.CTkTextbox(app, width=850, height=300)
 caja_productos.pack(pady=10)
 
+# Simbología de Color
+
+caja_productos._textbox.tag_configure("urgente", foreground="#ff5555")
+caja_productos._textbox.tag_configure("suficiente", foreground="#55ff55")
+
 # Ejecutar
 cargar_productos()
 app.mainloop()
+
+
+    ## Deprecated
+    # for producto in productos_ordenados:
+    #     id_producto, nombre, categoria, unidad_medida, stock_actual, stock_minimo = producto
+
+    #     if stock_actual <= stock_minimo:
+            
+    #         estado = "URGENTE COMPRAR"
+    #         etiqueta_color ="urgente"
+    #     else:
+    #         estado = "Stock suficiente"
+    #         etiqueta_color = "suficiente"
