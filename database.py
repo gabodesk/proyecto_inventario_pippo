@@ -78,3 +78,24 @@ def obtener_productos():
     conexion.close()
 
     return productos
+
+# busca productos que contengan texto escrito
+# cruzada con categoría indicada
+def buscar_productos(texto_busqueda, categoria_busqueda):
+    """Busca productos por nombre y/o categoría."""
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    cursor.execute(
+        """SELECT id, nombre, categoria, unidad_medida, stock_actual, stock_minimo
+        FROM productos
+        WHERE nombre LIKE ?
+        AND categoria LIKE ?
+        ORDER BY nombre ASC""",
+        (f"%{texto_busqueda}%", f"%{categoria_busqueda}%")
+    )
+
+    productos = cursor.fetchall()
+    conexion.close()
+
+    return productos

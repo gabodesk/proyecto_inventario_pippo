@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from database import crear_tablas, agregar_producto, obtener_productos
+from database import crear_tablas, agregar_producto, obtener_productos, buscar_productos
 
 # Crea tabla al iniciar aplicación:
 crear_tablas()
@@ -46,21 +46,22 @@ def registrar_producto():
 
 
 def cargar_productos():
-    """Carga productos desde SQLite, imprime en pantalla,
-    ordena según urgencia"""
-    caja_productos.delete("0.0", "end")
-    
+    """Carga todos los productos desde SQLite."""
     productos = obtener_productos()
+    mostrar_productos(productos)
+
+
+def mostrar_productos(productos):
+    """Muestra en pantalla una lista de productos."""
+    caja_productos.delete("0.0", "end")
 
     if len(productos) == 0:
-        caja_productos.insert("end", "No hay productos registrados todavía")
+        caja_productos.insert("end", "No hay productos para mostrar")
         return
     
-    # Esta parte ordena:
     urgentes = []
     suficientes = []
 
-    # loop de carga:
     for producto in productos:
         id_producto, nombre, categoria, unidad_medida, stock_actual, stock_minimo = producto
 
@@ -70,7 +71,6 @@ def cargar_productos():
             suficientes.append(producto)
 
     productos_ordenados = urgentes + suficientes
-    
 
     for producto in productos_ordenados:
         id_producto, nombre, categoria, unidad_medida, stock_actual, stock_minimo = producto
@@ -80,7 +80,7 @@ def cargar_productos():
             etiqueta_color = "urgente"
         else:
             estado = "Stock suficiente"
-            etiqueta_color= "suficiente"
+            etiqueta_color = "suficiente"
 
         texto = (
             f"ID: {id_producto} | "
@@ -98,13 +98,23 @@ def cargar_productos():
 
         caja_productos._textbox.tag_add(etiqueta_color, posicion_inicio, posicion_final)
 
+def buscar_en_pantalla():
+    """Busca productos según texto y categoría seleccionada."""
+    texto = entrada_busqueda.get()
+    categoria = busqueda_categoria.get()
 
+    if categoria == "todas":
+        categoria = ""
 
-# Título
+    productos = buscar_productos(texto, categoria)
+
+    mostrar_productos(productos)
+
+# Título -------------------------------
 titulo = ctk.CTkLabel(app, text="Sistema de Inventario")
 titulo.pack(pady=10)
 
-# Marco formulario
+# Marco formulario -------------------------------
 marco_formulario = ctk.CTkFrame(app)
 marco_formulario.pack(pady=10, padx=20, fill="x")
 
@@ -134,6 +144,40 @@ entrada_stock_actual.grid(row=1, column=0, padx=10, pady=10)
 entrada_stock_minimo = ctk.CTkEntry(marco_formulario, placeholder_text="Stock mínimo")
 entrada_stock_minimo.grid(row=1, column=1, padx=10, pady=10)
 
+
+# Marco búsqueda -------------------------------
+marco_busqueda = ctk.CTkFrame(app)
+marco_busqueda.pack(pady=10, padx=20, fill="x")
+
+entrada_busqueda = ctk.CTkEntry(
+    marco_busqueda,
+    placeholder_text="Buscar por nombre"
+)
+entrada_busqueda.grid(row=0, column=0, padx=10, pady=10)
+
+busqueda_categoria = ctk.CTkOptionMenu(
+    marco_busqueda,
+    values=["todas", "limpieza", "educativo", "oficina"]
+)
+busqueda_categoria.grid(row=0, column=1, padx=10, pady=10)
+busqueda_categoria.set("todas")
+
+#   Botón Busqueda:
+boton_buscar = ctk.CTkButton(
+    marco_busqueda,
+    text="Buscar",
+    command=buscar_en_pantalla
+)
+boton_buscar.grid(row=0, column=2, padx=10, pady=10)
+
+boton_mostrar_todos = ctk.CTkButton(
+    marco_busqueda,
+    text="Mostrar todos",
+    command=cargar_productos
+)
+boton_mostrar_todos.grid(row=0, column=3, padx=10, pady=10)
+
+
 # Botón
 boton_registrar = ctk.CTkButton(
     marco_formulario,
@@ -146,16 +190,15 @@ boton_registrar.grid(row=1, column=2, padx=10, pady=10)
 etiqueta_mensaje = ctk.CTkLabel(app, text="")
 etiqueta_mensaje.pack(pady=5)
 
-# Se define caja de productos para listar
+# Se define caja de productos para listar -------------------------------
 caja_productos = ctk.CTkTextbox(app, width=850, height=300)
 caja_productos.pack(pady=10)
 
-# Simbología de Color
-
+# Simbología de Color -------------------------------
 caja_productos._textbox.tag_configure("urgente", foreground="#ff5555")
 caja_productos._textbox.tag_configure("suficiente", foreground="#55ff55")
 
-# Ejecutar
+# Ejecutar -------------------------------
 cargar_productos()
 app.mainloop()
 
