@@ -99,3 +99,54 @@ def buscar_productos(texto_busqueda, categoria_busqueda):
     conexion.close()
 
     return productos
+
+
+def actualizar_producto(
+        id_producto,
+        nombre,
+        categoria,
+        unidad_medida,
+        stock_actual,
+        stock_minimo
+        ):
+    """Actualiza los datos de un producto existente"""
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    try:
+        cursor.execute(
+            """UPDATE productos
+            SET nombre = ?,
+                categoria = ?,
+                unidad_medida = ?,
+                stock_actual = ?,
+                stock_minimo = ?
+            WHERE id = ?
+            """,
+            (
+                nombre, 
+                categoria, 
+                unidad_medida, 
+                stock_actual, 
+                stock_minimo, 
+                id_producto
+            )
+        )
+
+        conexion.commit()
+
+        if cursor.rowcount == 0:
+            return False
+        
+        return True
+    
+    except sqlite3.Error as error:
+        print(f"Error al actualizar producto: {error}")
+        return False
+    
+    # Se ejecuta siempre:
+    finally:
+        if conexion:
+            conexion.close()
+
+

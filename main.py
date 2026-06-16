@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from database import crear_tablas, agregar_producto, obtener_productos, buscar_productos
+from database import crear_tablas, agregar_producto, obtener_productos, buscar_productos, actualizar_producto
 
 # Crea tabla al iniciar aplicación:
 crear_tablas()
@@ -11,7 +11,9 @@ ctk.set_default_color_theme("green")
 # Ventana principal
 app = ctk.CTk()
 app.title("Sistema Inventario - Jardín Pippo")
-app.geometry("900x600")
+
+# se aumentó tamaño ventana
+app.geometry("1000x600")
 
 def registrar_producto():
     """toma datos del formulario y guarda en SQLite"""
@@ -36,11 +38,14 @@ def registrar_producto():
     
     etiqueta_mensaje.configure(text="Producto registrado correctamente")
 
+    # se agrega limpiar campo id
+    entrada_id.delete(0, "end")
     entrada_nombre.delete(0, "end")
     entrada_categoria.set("limpieza")
     entrada_unidad_medida.set("unidades enteras")
     entrada_stock_actual.delete(0, "end")
     entrada_stock_minimo.delete(0, "end")
+
 
     cargar_productos()
 
@@ -110,6 +115,50 @@ def buscar_en_pantalla():
 
     mostrar_productos(productos)
 
+
+def editar_producto():
+    """Actualiza producto existente según ID."""
+    try: 
+        id_producto = int(entrada_id.get())
+        nombre = entrada_nombre.get()
+        categoria = entrada_categoria.get()
+        unidad_medida = entrada_unidad_medida.get()
+        stock_actual = float(entrada_stock_actual.get())
+        stock_minimo = float(entrada_stock_minimo.get())
+
+        if nombre == "": #campo vacio?
+            etiqueta_mensaje.configure(text="Completa el nombre de producto")
+            return
+        
+        actualizado = actualizar_producto(
+            id_producto,
+            nombre,
+            categoria,
+            unidad_medida,
+            stock_actual,
+            stock_minimo
+        )
+
+        # actualizado returns True or False
+        if actualizado:
+            etiqueta_mensaje.configure(text="Producto actualizado exitosamente")
+            # faltaba cargar:
+            cargar_productos()
+        else:
+            etiqueta_mensaje.configure(text="No se encontró producto con ese ID")
+        
+    except ValueError:
+        etiqueta_mensaje.configure(text="ID, stock actual y stock mínimo deben ser números")
+
+
+
+
+
+
+
+
+###### CUSTOMTKINTER INTERFAZ: ######
+
 # Título -------------------------------
 titulo = ctk.CTkLabel(app, text="Sistema de Inventario")
 titulo.pack(pady=10)
@@ -118,8 +167,12 @@ titulo.pack(pady=10)
 marco_formulario = ctk.CTkFrame(app)
 marco_formulario.pack(pady=10, padx=20, fill="x")
 
+entrada_id = ctk.CTkEntry(marco_formulario, placeholder_text="ID (Solo para Editar)")
+entrada_id.grid(row=0, column=0, padx=10, pady=10)
+
+# se cambió de columna la entrada de nombre
 entrada_nombre = ctk.CTkEntry(marco_formulario, placeholder_text="Nombre del producto")
-entrada_nombre.grid(row=0, column=0, padx=10, pady=10)
+entrada_nombre.grid(row=0, column=1, padx=10, pady=10)
 
 opciones_categoria = ["limpieza", "educativo", "oficina"]
 opciones_unidad = ["unidades enteras", "litros", "kilogramos", "metros"]
@@ -128,14 +181,16 @@ entrada_categoria = ctk.CTkOptionMenu(
     marco_formulario,
     values=opciones_categoria
 )
-entrada_categoria.grid(row=0, column=1, padx=10, pady=10)
+
+# se cambia de columna entrada categoria
+entrada_categoria.grid(row=0, column=2, padx=10, pady=10)
 entrada_categoria.set("limpieza")
 
 entrada_unidad_medida = ctk.CTkOptionMenu(
     marco_formulario,
     values=opciones_unidad
 )
-entrada_unidad_medida.grid(row=0, column=2, padx=10, pady=10)
+entrada_unidad_medida.grid(row=0, column=3, padx=10, pady=10)
 entrada_unidad_medida.set("unidades enteras")
 
 entrada_stock_actual = ctk.CTkEntry(marco_formulario, placeholder_text="Stock actual")
@@ -178,7 +233,7 @@ boton_mostrar_todos = ctk.CTkButton(
 boton_mostrar_todos.grid(row=0, column=3, padx=10, pady=10)
 
 
-# Botón
+# Botón registrar y actualizar
 boton_registrar = ctk.CTkButton(
     marco_formulario,
     text="Registrar producto",
@@ -186,6 +241,12 @@ boton_registrar = ctk.CTkButton(
 )
 boton_registrar.grid(row=1, column=2, padx=10, pady=10)
 
+boton_editar = ctk.CTkButton(
+    marco_formulario,
+    text="Editar producto",
+    command=editar_producto
+)
+boton_editar.grid(row=1, column=3, padx=10, pady=10)
 # Mensaje
 etiqueta_mensaje = ctk.CTkLabel(app, text="")
 etiqueta_mensaje.pack(pady=5)
