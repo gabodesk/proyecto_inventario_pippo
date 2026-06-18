@@ -116,19 +116,19 @@ def actualizar_producto(
     try:
         cursor.execute(
             """UPDATE productos
-            SET nombre = ?,
-                categoria = ?,
-                unidad_medida = ?,
-                stock_actual = ?,
-                stock_minimo = ?
+            SET nombre = COALESCE(NULLIF(?, ''), nombre),
+                categoria = COALESCE(NULLIF(?, ''), categoria),
+                unidad_medida = COALESCE(NULLIF(?, ''), unidad_medida),
+                stock_actual = COALESCE(NULLIF(?, ''), stock_actual),
+                stock_minimo = COALESCE(NULLIF(?, ''), stock_minimo)
             WHERE id = ?
             """,
             (
-                nombre, 
-                categoria, 
-                unidad_medida, 
-                stock_actual, 
-                stock_minimo, 
+                nombre,
+                categoria,
+                unidad_medida,
+                stock_actual,
+                stock_minimo,
                 id_producto
             )
         )
@@ -150,3 +150,32 @@ def actualizar_producto(
             conexion.close()
 
 
+def eliminar_producto(id_producto):
+    """Elimina un producto existente según su ID."""
+    conexion = None
+
+    try:
+        conexion = conectar()
+        cursor = conexion.cursor()
+
+        cursor.execute(
+            """DELETE FROM productos
+            WHERE id = ?
+            """,
+            (id_producto,) # La coma final corresponde por ser una tupla
+        )
+
+        conexion.commit()
+
+        if cursor.rowcount == 0:
+            return False
+
+        return True
+
+    except sqlite3.Error as error:
+        print(f"Error al eliminar producto: {error}")
+        return False
+
+    finally:
+        if conexion:
+            conexion.close()

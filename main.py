@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from database import crear_tablas, agregar_producto, obtener_productos, buscar_productos, actualizar_producto
+from database import crear_tablas, agregar_producto, obtener_productos, buscar_productos, actualizar_producto, eliminar_producto
 
 # Crea tabla al iniciar aplicación:
 crear_tablas()
@@ -8,12 +8,16 @@ crear_tablas()
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
 
+# Zoom (tamaño del contenido)
+
+ctk.set_widget_scaling(1.2)
+
 # Ventana principal
 app = ctk.CTk()
 app.title("Sistema Inventario - Jardín Pippo")
 
 # se aumentó tamaño ventana
-app.geometry("1000x600")
+app.geometry("1300x700")
 
 def registrar_producto():
     """toma datos del formulario y guarda en SQLite"""
@@ -118,40 +122,72 @@ def buscar_en_pantalla():
 
 def editar_producto():
     """Actualiza producto existente según ID."""
-    try: 
+    try:
         id_producto = int(entrada_id.get())
-        nombre = entrada_nombre.get()
-        categoria = entrada_categoria.get()
-        unidad_medida = entrada_unidad_medida.get()
-        stock_actual = float(entrada_stock_actual.get())
-        stock_minimo = float(entrada_stock_minimo.get())
+    except ValueError:
+        etiqueta_mensaje.configure(text="ID debe ser un número")
+        return
 
-        if nombre == "": #campo vacio?
-            etiqueta_mensaje.configure(text="Completa el nombre de producto")
+    nombre = entrada_nombre.get()
+    categoria = entrada_categoria.get()
+    unidad_medida = entrada_unidad_medida.get()
+    stock_actual = entrada_stock_actual.get()
+    stock_minimo = entrada_stock_minimo.get()
+
+    # Validar stock actual solo si fue escrito
+    if stock_actual != "":
+        try:
+            stock_actual = float(stock_actual)
+        except ValueError:
+            etiqueta_mensaje.configure(text="Stock actual debe ser un número")
             return
-        
-        actualizado = actualizar_producto(
-            id_producto,
-            nombre,
-            categoria,
-            unidad_medida,
-            stock_actual,
-            stock_minimo
-        )
 
-        # actualizado returns True or False
-        if actualizado:
-            etiqueta_mensaje.configure(text="Producto actualizado exitosamente")
-            # faltaba cargar:
+    # Validar stock mínimo solo si fue escrito
+    if stock_minimo != "":
+        try:
+            stock_minimo = float(stock_minimo)
+        except ValueError:
+            etiqueta_mensaje.configure(text="Stock mínimo debe ser un número")
+            return
+
+    actualizado = actualizar_producto(
+        id_producto,
+        nombre,
+        categoria,
+        unidad_medida,
+        stock_actual,
+        stock_minimo
+    )
+
+    if actualizado:
+        etiqueta_mensaje.configure(text="Producto actualizado exitosamente")
+        cargar_productos()
+    else:
+        etiqueta_mensaje.configure(text="No se encontró producto con ese ID")
+
+
+
+def borrar_producto():
+    """Elimina un producto existente según su ID."""
+    try:
+        id_producto = int(entrada_id.get())
+
+        eliminado = eliminar_producto(id_producto)
+
+        if eliminado:
+            etiqueta_mensaje.configure(text="Producto eliminado correctamente")
+
+            entrada_id.delete(0, "end")
+            entrada_nombre.delete(0, "end")
+            entrada_stock_actual.delete(0, "end")
+            entrada_stock_minimo.delete(0, "end")
+
             cargar_productos()
         else:
-            etiqueta_mensaje.configure(text="No se encontró producto con ese ID")
-        
+            etiqueta_mensaje.configure(text="No se encontró un producto con ese ID")
+
     except ValueError:
-        etiqueta_mensaje.configure(text="ID, stock actual y stock mínimo deben ser números")
-
-
-
+        etiqueta_mensaje.configure(text="ID debe ser un número entero")
 
 
 
@@ -167,10 +203,9 @@ titulo.pack(pady=10)
 marco_formulario = ctk.CTkFrame(app)
 marco_formulario.pack(pady=10, padx=20, fill="x")
 
-entrada_id = ctk.CTkEntry(marco_formulario, placeholder_text="ID (Solo para Editar)")
+entrada_id = ctk.CTkEntry(marco_formulario, placeholder_text="ID solo Editar/Borrar", fg_color="brown", text_color="yellow")
 entrada_id.grid(row=0, column=0, padx=10, pady=10)
 
-# se cambió de columna la entrada de nombre
 entrada_nombre = ctk.CTkEntry(marco_formulario, placeholder_text="Nombre del producto")
 entrada_nombre.grid(row=0, column=1, padx=10, pady=10)
 
@@ -182,7 +217,7 @@ entrada_categoria = ctk.CTkOptionMenu(
     values=opciones_categoria
 )
 
-# se cambia de columna entrada categoria
+
 entrada_categoria.grid(row=0, column=2, padx=10, pady=10)
 entrada_categoria.set("limpieza")
 
@@ -233,26 +268,39 @@ boton_mostrar_todos = ctk.CTkButton(
 boton_mostrar_todos.grid(row=0, column=3, padx=10, pady=10)
 
 
-# Botón registrar y actualizar
+# Botónes formulario
 boton_registrar = ctk.CTkButton(
     marco_formulario,
     text="Registrar producto",
-    command=registrar_producto
-)
+    command=registrar_producto,
+    fg_color="dark green"
+    )
 boton_registrar.grid(row=1, column=2, padx=10, pady=10)
 
 boton_editar = ctk.CTkButton(
     marco_formulario,
     text="Editar producto",
-    command=editar_producto
+    command=editar_producto,
+    fg_color="brown",
+    text_color="beige"
 )
 boton_editar.grid(row=1, column=3, padx=10, pady=10)
+
+
+boton_eliminar = ctk.CTkButton(
+    marco_formulario,
+    text="Eliminar producto",
+    command=borrar_producto,
+    fg_color="dark red",
+    text_color="yellow"
+)
+boton_eliminar.grid(row=2, column=3, padx=10, pady=10)
 # Mensaje
 etiqueta_mensaje = ctk.CTkLabel(app, text="")
 etiqueta_mensaje.pack(pady=5)
 
 # Se define caja de productos para listar -------------------------------
-caja_productos = ctk.CTkTextbox(app, width=850, height=300)
+caja_productos = ctk.CTkTextbox(app, width=900, height=300)
 caja_productos.pack(pady=10)
 
 # Simbología de Color -------------------------------
